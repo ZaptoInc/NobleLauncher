@@ -5,14 +5,6 @@ Namespace WebSocket.Client
         Sub ServerConnected()
 
         End Sub
-
-        Sub MessageReceived(e As MessageReceivedEventArgs)
-
-        End Sub
-
-        Sub ServerDisconnected()
-
-        End Sub
     End Module
 End Namespace
 

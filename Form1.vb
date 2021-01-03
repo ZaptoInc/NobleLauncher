@@ -13,6 +13,14 @@ Public Class Form1
 
     Dim web As WebClient = New WebClient
 
+    Private args As String()
+
+    Public Sub New(args As String())
+        Me.args = args
+        Me.InitializeComponent()
+    End Sub
+
+
     Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         If Not IO.Directory.Exists(DefaultDirectory) Then
             IO.Directory.CreateDirectory(DefaultDirectory)
@@ -29,6 +37,11 @@ Public Class Form1
             If Not File.Exists($"{DefaultDirectory}\Newtonsoft.Json.dll") Then
                 web.DownloadFile("https://cdn.discordapp.com/attachments/714829721078202429/795253986151104522/Newtonsoft.Json.dll", $"{DefaultDirectory}\Newtonsoft.Json.dll")
             End If
+            Dim dependencies As JObject = JObject.Parse(web.DownloadString())
+            If args.Contains("-generatemd5values") Then
+                Dim result As String
+            End If
+
         End If
 
 

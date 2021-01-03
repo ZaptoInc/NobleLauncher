@@ -1,3 +1,11 @@
-﻿Module MessageReceivedExecuter
+﻿Imports WatsonWebsocket
 
-End Module
+Namespace WebSocket.Client
+    Module MessageReceivedExecuter
+
+        Sub MessageReceived(e As MessageReceivedEventArgs)
+
+        End Sub
+    End Module
+End Namespace
+

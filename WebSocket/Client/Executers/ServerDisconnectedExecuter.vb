@@ -1,3 +1,10 @@
-﻿Module ServerDisconnectedExecuter
+﻿Imports WatsonWebsocket
 
-End Module
+Namespace WebSocket.Client
+    Module ServerDisconnectedExecuter
+        Sub ServerDisconnected()
+
+        End Sub
+    End Module
+End Namespace
+

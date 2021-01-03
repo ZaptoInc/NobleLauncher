@@ -18,6 +18,25 @@ Namespace WebSocket
         Sub DisconnectClient()
             client.Stop()
         End Sub
+
+#Region "Client Handlers"
+        Private Sub client_ServerConnected(sender As Object, e As EventArgs) Handles client.ServerConnected
+            WebSocket.Client.ServerConnected()
+        End Sub
+
+        Private Sub client_MessageReceived(sender As Object, e As MessageReceivedEventArgs) Handles client.MessageReceived
+            WebSocket.Client.MessageReceived(e)
+        End Sub
+
+        Private Sub client_ServerDisconnected(sender As Object, e As EventArgs) Handles client.ServerDisconnected
+            WebSocket.Client.ServerDisconnected()
+        End Sub
+#End Region
+
+#Region "Server Handlers"
+
+#End Region
+
     End Module
 End Namespace
 

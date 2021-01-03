@@ -1,0 +1,13 @@
+﻿{
+  "dependencies": [ "Newtonsoft.Json.dll", "WatsonWebsocket.dll" ],
+  "individials": {
+    "Newtonsoft.Json.dll": {
+      "md5": "",
+      "url": ""
+    },
+    "WatsonWebsocket.dll": {
+      "md5": "",
+      "url": ""
+    }
+  }
+}
