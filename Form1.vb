@@ -28,9 +28,6 @@ Public Class Form1
         If Not IO.Directory.Exists(DefaultDirectory) Then
             IO.Directory.CreateDirectory(DefaultDirectory)
         End If
-        If Not IO.Directory.Exists($"{DefaultDirectory}/cache") Then
-            IO.Directory.CreateDirectory($"{DefaultDirectory}/cache")
-        End If
         If CurrentDirectory = DefaultDirectory Then
             Dim LauncherDefaultPath As String = $"{DefaultDirectory}\NobleLauncher.exe"
             If Not WebSocket.Client.RequestClientToStart() Then
@@ -68,6 +65,12 @@ Public Class Form1
             End If
 
             WebSocket.StartServer()
+
+            If IO.Directory.Exists($"{DefaultDirectory}/cache") Then
+
+                IO.Directory.Delete($"{DefaultDirectory}/cache", True)
+            End If
+            IO.Directory.CreateDirectory($"{DefaultDirectory}/cache")
 
 #Region "arg -silentstart"
             If args.Contains("-silentstart") Then
@@ -116,6 +119,7 @@ Public Class Form1
             For Each d In Directory.GetDirectories(path)
                 If d.EndsWith("replays") Then
                 ElseIf d.EndsWith("maps") Then
+                ElseIf d.EndsWith("cfg") Then
                 Else
                     Directory.Delete(d, True)
                 End If
@@ -128,6 +132,7 @@ Public Class Form1
         If Not Directory.Exists(modfolder) Then
             Directory.CreateDirectory(modfolder)
         End If
+
         Dim modfolder_csgo = $"{modfolder}\csgo"
         CleanGameInstall(modfolder_csgo)
     End Sub
