@@ -1,6 +1,7 @@
 ﻿Imports System.Environment
 Imports System.IO
 Imports System.Net
+Imports Newtonsoft.Json
 Imports Newtonsoft.Json.Linq
 
 Public Class Form1
@@ -8,13 +9,16 @@ Public Class Form1
     Public ReadOnly DefaultDirectory As String = $"{GetFolderPath(SpecialFolder.ApplicationData)}\.noble"
     Public ReadOnly CurrentDirectory As String = Application.StartupPath
     Public ReadOnly CurrentPath As String = Application.ExecutablePath()
+    Public ReadOnly ConfigPath As String = $"{DefaultDirectory}\LauncherConfig.json"
 
-    Public ReadOnly LauncherVertion As String = "v0.1.0"
+    Public ReadOnly LauncherVersion As String = "v0.1.0"
 
     Dim web As WebClient = New WebClient
 
     Private args As String()
     Private arg_string As String = " "
+
+    Public Config As ConfigObject = New ConfigObject
 
     Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         args = Environment.GetCommandLineArgs()
@@ -24,13 +28,22 @@ Public Class Form1
         If Not IO.Directory.Exists(DefaultDirectory) Then
             IO.Directory.CreateDirectory(DefaultDirectory)
         End If
-        'MsgBox($"DefaultDirectory is {DefaultDirectory}, CurrentDirectory is {CurrentDirectory}")
+        If Not IO.Directory.Exists($"{DefaultDirectory}/cache") Then
+            IO.Directory.CreateDirectory($"{DefaultDirectory}/cache")
+        End If
         If CurrentDirectory = DefaultDirectory Then
             Dim LauncherDefaultPath As String = $"{DefaultDirectory}\NobleLauncher.exe"
-            'If Not File.Exists(LauncherDefaultPath) Then
-            IO.File.Copy(CurrentPath, LauncherDefaultPath, True)
-            'End If
-            Process.Start(LauncherDefaultPath)
+            If Not WebSocket.Client.RequestClientToStart() Then
+                Console.WriteLine("not working")
+                IO.File.Copy(CurrentPath, LauncherDefaultPath, True)
+                Dim si As New ProcessStartInfo
+                si.FileName = LauncherDefaultPath
+                si.Arguments = arg_string
+                si.WorkingDirectory = DefaultDirectory
+                Process.Start(si)
+            Else
+                Console.WriteLine("working")
+            End If
             End
         Else
             If Not File.Exists($"{DefaultDirectory}\Newtonsoft.Json.dll") Then
@@ -48,25 +61,74 @@ Public Class Form1
                 End
             End If
 #End Region
+            Dim silentstart As Boolean = False
 
-#Region "-silentstart"
+            If WebSocket.Client.RequestClientToStart() Then
+                End
+            End If
+
+            WebSocket.StartServer()
+
+#Region "arg -silentstart"
             If args.Contains("-silentstart") Then
-                Me.Hide()
+                silentstart = True
+            End If
+            If silentstart Then
+                Dim thr As New Threading.Thread(Function(x)
+                                                    Threading.Thread.Sleep(100)
+                                                    Me.WindowState = FormWindowState.Minimized
+                                                    GhostTheme1.Visible = False
+                                                    Me.ShowInTaskbar = False
+                                                End Function)
+                thr.Start()
             End If
 #End Region
-            Dim dependencies_individials As JObject = dependencies("individials")
             For Each i In dependencies_dependencies
                 Dim currentfile = hash_file(IO.File.ReadAllBytes(i("name")))
-                If currentfile IsNot i("md5") Then
+                If Not currentfile = i("md5").ToString Then
                     web.DownloadFile(i("url").ToString, i("name"))
                 End If
             Next
-
+            If File.Exists(ConfigPath) Then
+                Config = JsonConvert.DeserializeObject(Of ConfigObject)(IO.File.ReadAllText(ConfigPath))
+            End If
         End If
 
 
         'Dim t As JObject = New JObject
         't.Add("test", "success")
         'MsgBox(t.ToString)
+    End Sub
+
+    Function CheckAndCorrectConfig(cfg As ConfigObject) As Boolean
+
+    End Function
+
+    Private Sub Install_DownloadButton_Click(sender As Object, e As EventArgs) Handles Install_DownloadButton.Click
+
+    End Sub
+
+    Sub CleanGameInstall(path As String)
+        If Directory.Exists(path) Then
+            For Each f In Directory.GetFiles(path)
+                File.Delete(f)
+            Next
+            For Each d In Directory.GetDirectories(path)
+                If d.EndsWith("replays") Then
+                ElseIf d.EndsWith("maps") Then
+                Else
+                    Directory.Delete(d, True)
+                End If
+            Next
+        End If
+    End Sub
+
+    Sub DownloadMod()
+        Dim modfolder As String = $"{DefaultDirectory}\noble"
+        If Not Directory.Exists(modfolder) Then
+            Directory.CreateDirectory(modfolder)
+        End If
+        Dim modfolder_csgo = $"{modfolder}\csgo"
+        CleanGameInstall(modfolder_csgo)
     End Sub
 End Class

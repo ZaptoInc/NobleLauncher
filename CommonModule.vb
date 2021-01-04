@@ -43,4 +43,30 @@ Module CommonModule
         Return a
 
     End Function
+
+    Public Function testSelectedPort(ip As String, port As Integer) As Boolean
+        ' Function to open a socket to the specified port to see if it is listening
+
+        ' Connect to socket
+        Dim testSocket As New System.Net.Sockets.TcpClient()
+
+        Try
+            testSocket.Connect(ip, port)
+            ' The socket is accepting connections
+            testSocket.Close()
+            Return True
+
+        Catch ex As Exception
+            ' The port is not accepting connections
+            Return False
+        End Try
+
+        Return False
+    End Function
+    Function TimeStamp() As Long
+        Return CLng(DateTime.UtcNow.Subtract(New DateTime(1970, 1, 1)).TotalMilliseconds)
+    End Function
+    Function TimeStamp(date_ As Date) As Long
+        Return CLng(date_.Subtract(New DateTime(1970, 1, 1)).TotalMilliseconds)
+    End Function
 End Module

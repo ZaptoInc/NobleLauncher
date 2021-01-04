@@ -1,0 +1,31 @@
+﻿{
+  "ver": "1.2c",
+  "files": [
+    {
+      "name": "noble.exe",
+      "type": 0,
+      "dir": "",
+      "url": "https://cdn.discordapp.com/attachments/795536545774829580/795536835039592468/noble.exe"
+    },
+    {
+      "name": "version.txt",
+      "type": 0,
+      "dir": "",
+      "url": "https://cdn.discordapp.com/attachments/795536545774829580/795536842253664266/version.txt"
+    },
+    {
+      "name": "csgo_part1.zip",
+      "type": 1,
+      "dir": "\\csgo",
+      "url": "https://cdn.discordapp.com/attachments/795536545774829580/795537130939744276/csgo_part1.zip"
+    },
+    {
+      "name": "csgo_part2.zip",
+      "type": 1,
+      "dir": "\\csgo",
+      "url": "https://cdn.discordapp.com/attachments/795536545774829580/795537149133979678/csgo_part2.zip"
+    }
+    
+  ]
+
+}
