@@ -127,12 +127,12 @@ Public Class Form1
         End If
     End Sub
 
-    Sub DownloadMod()
+    Sub DownloadMod(currentver As String, Optional reinstall As Boolean = False)
         Dim modfolder As String = $"{DefaultDirectory}\noble"
         If Not Directory.Exists(modfolder) Then
             Directory.CreateDirectory(modfolder)
         End If
-
+        Dim mod_json As JObject = JObject.Parse(web.DownloadString("https://raw.githubusercontent.com/ZaptoInc/NobleLauncher/main/files/mod.json"))
         Dim modfolder_csgo = $"{modfolder}\csgo"
         CleanGameInstall(modfolder_csgo)
     End Sub
