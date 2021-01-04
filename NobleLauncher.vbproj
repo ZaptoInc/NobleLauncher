@@ -61,6 +61,7 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Deployment" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.IO.Compression" />
     <Reference Include="System.IO.Compression.FileSystem" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
@@ -124,6 +125,7 @@
     <Compile Include="WebSocket\Server\Executers\ClientConnectedExecuter.vb" />
     <Compile Include="WebSocket\Server\Executers\ClientDisconnectedExecuter.vb" />
     <Compile Include="WebSocket\Server\Executers\MessageReceivedExecuter.vb" />
+    <Compile Include="Win32.vb" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Form1.resx">

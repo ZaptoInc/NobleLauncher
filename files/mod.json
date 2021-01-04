@@ -19,7 +19,7 @@
         },
         {
           "name": "csgo_part1.zip",
-          "type": 2 ,
+          "type": 2,
           "dir": "\\csgo",
           "url": "https://cdn.discordapp.com/attachments/795536545774829580/795537130939744276/csgo_part1.zip"
         },
@@ -28,6 +28,12 @@
           "type": 2,
           "dir": "\\csgo",
           "url": "https://cdn.discordapp.com/attachments/795536545774829580/795537149133979678/csgo_part2.zip"
+        },
+        {
+          "name": "csgo_noble.txt",
+          "type": 1,
+          "dir": "\\csgo\\resource",
+          "url": "https://cdn.discordapp.com/attachments/795536545774829580/795682228231340082/csgo_noble.txt"
         }
 
       ]

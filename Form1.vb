@@ -1,6 +1,7 @@
 ﻿Imports System.Environment
 Imports System.IO
 Imports System.IO.Compression
+Imports System.Media
 Imports System.Net
 Imports Newtonsoft.Json
 Imports Newtonsoft.Json.Linq
@@ -25,6 +26,7 @@ Public Class Form1
     Public ModInfo As ModObject = Nothing
 
     Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        CheckForIllegalCrossThreadCalls = False
         args = Environment.GetCommandLineArgs()
         For Each arg In args
             arg_string &= $"{arg} "
@@ -39,13 +41,62 @@ Public Class Form1
             Catch ex As Exception
 
             End Try
-            Dim si As New ProcessStartInfo
-            si.FileName = LauncherDefaultPath
-            si.Arguments = arg_string
-            si.WorkingDirectory = DefaultDirectory
-            Process.Start(si)
+
+
+            Process.Start(New ProcessStartInfo With {
+                .FileName = LauncherDefaultPath, .Arguments = arg_string, .WorkingDirectory = DefaultDirectory
+            })
             End
         Else
+#Region "-createsymlink"
+            If args.Contains("-createsymlink") Then
+                If Win32.IsAdministrator Then
+                    Dim initaldirectory As String = "C:\Program Files (x86)\Steam\steamapps\common\Counter-Strike Global Offensive"
+                    If Not Directory.Exists(initaldirectory) Then
+                        initaldirectory = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles)
+                    End If
+                    Dim dialog As New OpenFileDialog With {.Filter = "csgo.exe|csgo.exe", .InitialDirectory = initaldirectory, .Multiselect = False}
+                    Dim csgoDirectory = Nothing
+                    If dialog.ShowDialog = DialogResult.OK Then
+                        csgoDirectory = dialog.FileName.Replace("\csgo.exe", "")
+                    Else
+                        MsgBox("Sorry, you closed me and i don't know where csgo is located, i can't do anything", MsgBoxStyle.OkOnly, "Ho Ho...")
+                        End
+                    End If
+
+                    Dim baseDirectory As String = $"{FileDirectory}\noble"
+                    CreateSymLink(baseDirectory + "/csgo/maps/workshop", csgoDirectory + "/csgo/maps/workshop", True)
+                    CreateSymLink(baseDirectory + "/csgo/panorama/fonts", csgoDirectory + "/csgo/panorama/fonts", True)
+                    Dim flag4 As Boolean = Directory.Exists(baseDirectory + "/csgo/maps/workshop") AndAlso Not File.GetAttributes(baseDirectory + "/csgo/maps/workshop").ToString().Contains("ReparsePoint")
+                    If flag4 Then
+                        Directory.Delete(baseDirectory + "/csgo/maps/workshop")
+                        File.Create(baseDirectory + "/csgo/maps/workshop")
+                    Else
+                        Dim flag5 As Boolean = Not Directory.Exists(baseDirectory + "/csgo/maps/workshop") AndAlso Not File.Exists(baseDirectory + "/csgo/maps/workshop")
+                        If flag5 Then
+                            File.Create(baseDirectory + "/csgo/maps/workshop")
+                        End If
+                    End If
+                    Dim flag6 As Boolean = Directory.Exists(baseDirectory + "/csgo/panorama/fonts") AndAlso Not File.GetAttributes(baseDirectory + "/csgo/panorama/fonts").ToString().Contains("ReparsePoint")
+                    If flag6 Then
+                        Directory.Delete(baseDirectory + "/csgo/panorama/fonts")
+                        File.Create(baseDirectory + "/csgo/panorama/fonts")
+                    Else
+                        Dim flag7 As Boolean = Not Directory.Exists(baseDirectory + "/csgo/panorama/fonts") AndAlso Not File.Exists(baseDirectory + "/csgo/panorama/fonts")
+                        If flag7 Then
+                            File.Create(baseDirectory + "/csgo/panorama/fonts")
+                        End If
+                    End If
+                Else
+                    If MsgBox("Sorry, i am Not launched With administrator permission, would you Like To Try again?", MsgBoxStyle.YesNo, "Admin permission") = MsgBoxResult.Yes Then
+                        Dim pr = Process.Start(New ProcessStartInfo With {.FileName = CurrentPath, .Arguments = arg_string, .Verb = "runas"})
+                        End
+                    Else
+                        End
+                    End If
+                End If
+            End If
+#End Region
             Try
                 If Not File.Exists($"{DefaultDirectory}\Newtonsoft.Json.dll") Then
                     web.DownloadFile("https://cdn.discordapp.com/attachments/714829721078202429/795253986151104522/Newtonsoft.Json.dll", $"{DefaultDirectory}\Newtonsoft.Json.dll")
@@ -57,7 +108,6 @@ Public Class Form1
             Catch ex As Exception
                 MsgBox("Could not download or verify dependency 'Newtonsoft.Json.dll'", MsgBoxStyle.Critical + MsgBoxStyle.YesNoCancel)
             End Try
-
             Dim dependencies As JObject = JObject.Parse(web.DownloadString("https://raw.githubusercontent.com/ZaptoInc/NobleLauncher/main/files/dependencies.json"))
             Dim dependencies_dependencies As JArray = dependencies("dependencies")
 #Region "arg -generatemd5values"
@@ -121,7 +171,8 @@ Public Class Form1
                         thr.Start()
 
                     End If
-                        Else
+                Else
+                    MainControl.SelectedTab = PlayPage
                 End If
             End If
 
@@ -134,7 +185,7 @@ Public Class Form1
     End Function
 
     Private Sub Install_DownloadButton_Click(sender As Object, e As EventArgs) Handles Install_DownloadButton.Click
-
+        DownloadMod(Config.mod_ver)
     End Sub
 
     Function CheckIfDownloadIsRequired(Optional currentver As Integer = 0, Optional reinstall As Boolean = False) As Boolean
@@ -165,14 +216,18 @@ Public Class Form1
                 If d.EndsWith("replays") Then
                 ElseIf d.EndsWith("maps") Then
                 ElseIf d.EndsWith("cfg") Then
+                ElseIf d.EndsWith("panorama") Then
                 Else
                     Directory.Delete(d, True)
                 End If
             Next
         End If
     End Sub
-
+    Dim downloadlogs As String = ""
     Sub DownloadMod(Optional currentver As Integer = 0, Optional reinstall As Boolean = False)
+        MainControl.SelectedTab = DownloadPage
+        Download_Logs.Items.Clear()
+        downloadlogs = ""
         If CheckIfDownloadIsRequired(currentver, reinstall) Then
             Dim modfolder As String = $"{FileDirectory}\noble"
             If Not Directory.Exists(modfolder) Then
@@ -181,27 +236,127 @@ Public Class Form1
             Dim modfolder_csgo = $"{modfolder}\csgo"
             If ModInfo Is Nothing Then
                 ModInfo = JsonConvert.DeserializeObject(Of ModObject)(web.DownloadString("https://raw.githubusercontent.com/ZaptoInc/NobleLauncher/main/files/mod.json"))
+                Application.DoEvents()
             End If
             If Not IO.Directory.Exists($"{FileDirectory}/cache") Then
                 IO.Directory.CreateDirectory($"{FileDirectory}/cache")
             End If
             Dim latest = ModInfo.vers(ModInfo.latestverid)
             CleanGameInstall(modfolder_csgo)
+            Download_Progressbar.Maximum = latest.files.Count
+            Dim failedfiles As Boolean = False
             For Each f In latest.files
+                Application.DoEvents()
+
                 Select Case f.type
                     Case Mod_Ver_File_TypeEnum.Folder
-                        Directory.CreateDirectory($"{modfolder}{f.dir}")
+                        Try
+                            AddDownloadLog($"Creating directory {modfolder}{f.dir}")
+                            Application.DoEvents()
+                            Directory.CreateDirectory($"{modfolder}{f.dir}")
+                        Catch ex As Exception
+                            AddDownloadLog($"/!\ERROR/!\ Failed to creating directory {modfolder}{f.dir}: {ex.ToString}")
+                            failedfiles = True
+                            Application.DoEvents()
+                        End Try
                     Case Mod_Ver_File_TypeEnum.File
-                        web.DownloadFile(f.url, $"{modfolder}{f.dir}\{f.name}")
-                    Case Mod_Ver_File_TypeEnum.Zip
-                        Dim guid_ As String = Guid.NewGuid.ToString.ToString
-                        Dim cachefile As String = $"{FileDirectory}/cache/{guid_}.cache"
-                        web.DownloadFile(f.url, cachefile)
-                        ZipFile.ExtractToDirectory(cachefile, $"{modfolder}{f.dir}")
-                        File.Delete(cachefile)
-                End Select
-            Next
+                        Try
+                            AddDownloadLog($"Downloading file {f.dir}{f.name}")
 
+                            Application.DoEvents()
+                            web.DownloadFile(f.url, $"{modfolder}{f.dir}\{f.name}")
+                            AddDownloadLog($"Downloaded file {f.dir}{f.name}")
+                            Application.DoEvents()
+                        Catch ex As Exception
+                            AddDownloadLog($"/!\ERROR/!\ Failed to download file {f.name}: {ex.ToString}")
+                            failedfiles = True
+                            Application.DoEvents()
+                        End Try
+                    Case Mod_Ver_File_TypeEnum.Zip
+                        Try
+                            Dim guid_ As String = Guid.NewGuid.ToString.ToString
+                            Dim cachefile As String = $"{FileDirectory}/cache/{guid_}.cache"
+                            AddDownloadLog($"Downloading Zip {f.name}")
+                            Application.DoEvents()
+                            web.DownloadFile(f.url, cachefile)
+                            AddDownloadLog($"Downloaded Zip {f.name}")
+                            Application.DoEvents()
+                            AddDownloadLog($"UnZipping {f.name}")
+                            Application.DoEvents()
+                            Using archive As ZipArchive = ZipFile.OpenRead(cachefile)
+                                For Each entry As ZipArchiveEntry In archive.Entries
+                                    Try
+                                        Dim entryFullname = Path.Combine($"{modfolder}{f.dir}", entry.FullName)
+                                        Dim entryPath = Path.GetDirectoryName(entryFullname)
+                                        If (Not (Directory.Exists(entryPath))) Then
+                                            Directory.CreateDirectory(entryPath)
+                                        End If
+
+                                        Dim entryFn = Path.GetFileName(entryFullname)
+                                        If (Not String.IsNullOrEmpty(entryFn)) Then
+                                            entry.ExtractToFile(entryFullname, True)
+                                        End If
+                                        AddDownloadLog($"Extracted {entry.FullName} from {f.name}")
+                                        Application.DoEvents()
+                                    Catch ex As Exception
+                                        AddDownloadLog($"/!\ERROR/!\ Failed to extract {entry.FullName} from {f.name}: {ex.ToString}")
+                                        failedfiles = True
+                                        Application.DoEvents()
+                                    End Try
+                                Next
+                            End Using
+                            AddDownloadLog($"UnZipped {f.name}")
+                            Application.DoEvents()
+                            File.Delete(cachefile)
+                        Catch ex As Exception
+                            AddDownloadLog($"/!\ERROR/!\ Failed to download or unZip {f.name}: {ex.ToString}")
+                            failedfiles = True
+                            Application.DoEvents()
+                        End Try
+                End Select
+                Download_Logs.SelectedIndex = Download_Logs.Items.Count - 1
+                Download_Logs.SelectedIndex = -1
+                Download_Progressbar.Value += 1
+            Next
+            Config.mod_ver = ModInfo.latestverid
+            IO.File.WriteAllText(ConfigPath, JsonConvert.SerializeObject(Config))
+            If failedfiles Then
+                If Not Directory.Exists($"{DefaultDirectory}\logs") Then
+                    Directory.CreateDirectory($"{DefaultDirectory}\logs")
+                End If
+                Dim logfilepath = $"{DefaultDirectory}\logs\downloadlog_{DateTime.Now.ToString("yyyy_MM_dd_HH_mm_ss")}.log"
+                IO.File.WriteAllText(logfilepath, downloadlogs)
+                If MsgBox("There was at least one error while downloading the game, whould you like to see the log file? (this can be useful if you need support)", MsgBoxStyle.YesNo, "Error occurred") = MsgBoxResult.Yes Then
+                    Process.Start("explorer.exe", $"/select,""{logfilepath}""")
+                End If
+            End If
+
+            Dim baseDirectory As String = $"{FileDirectory}\noble"
+            Dim flag3 As Boolean = Not Win32.IsAdministrator() AndAlso (File.Exists(baseDirectory + "/csgo/maps") OrElse File.Exists(baseDirectory + "/csgo/maps/workshop") OrElse (Not File.Exists(baseDirectory + "/csgo/maps/workshop") AndAlso Not Directory.Exists(baseDirectory + "/csgo/maps/workshop")) OrElse (Directory.Exists(baseDirectory + "/csgo/maps/workshop") AndAlso Not File.GetAttributes(baseDirectory + "/csgo/maps/workshop").ToString().Contains("ReparsePoint")) OrElse File.Exists(baseDirectory + "/csgo/panorama/fonts") OrElse (Not File.Exists(baseDirectory + "/csgo/panorama/fonts") AndAlso Not Directory.Exists(baseDirectory + "/csgo/panorama/fonts")) OrElse (Directory.Exists(baseDirectory + "/csgo/panorama/fonts") AndAlso Not File.GetAttributes(baseDirectory + "/csgo/panorama/fonts").ToString().Contains("ReparsePoint")))
+            If flag3 Then
+                SystemSounds.Exclamation.Play()
+                Dim allowlink As MsgBoxResult = MsgBox("Sir, permission to make the link between CS:GO and Noble Strike for the workshop and panorama folders? That way they don't make you lag and don't have to redownload em?", MessageBoxButtons.YesNo, "Admin permission")
+                If allowlink = MsgBoxResult.Yes Then
+                    Dim pr = Process.Start(New ProcessStartInfo With {.FileName = CurrentPath, .Arguments = "-createsymlink", .Verb = "runas"})
+                    pr.WaitForExit()
+                End If
+            End If
         End If
+    End Sub
+    Sub AddDownloadLog(log As String)
+        downloadlogs &= vbCrLf & "[" & DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss") & "]" & log
+        Download_Logs.Items.Add(log)
+    End Sub
+
+    Private Sub Download_PlayButton_Click(sender As Object, e As EventArgs) Handles Download_PlayButton.Click
+        MainControl.SelectedTab = PlayPage
+    End Sub
+
+    Private Sub Install_Autoupdate_CheckBox_CheckedChanged(sender As Object, e As EventArgs) Handles Install_Autoupdate_CheckBox.CheckedChanged
+        If Install_Autoupdate_CheckBox.Checked = True Then
+            Install_Autoupdate_CheckBox.CheckState = CheckState.Indeterminate
+        End If
+        Config.auto_update_game = Install_Autoupdate_CheckBox.Checked
+        IO.File.WriteAllText(ConfigPath, JsonConvert.SerializeObject(Config))
     End Sub
 End Class

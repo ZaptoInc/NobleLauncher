@@ -1,4 +1,5 @@
-﻿Imports System.Security.Cryptography
+﻿Imports System.IO
+Imports System.Security.Cryptography
 Imports System.Text
 
 Module CommonModule
@@ -68,5 +69,19 @@ Module CommonModule
     End Function
     Function TimeStamp(date_ As Date) As Long
         Return CLng(date_.Subtract(New DateTime(1970, 1, 1)).TotalMilliseconds)
+    End Function
+
+
+    Public Function CreateSymLink(where As String, fromWhere As String, Optional isDirectory As Boolean = False) As Boolean
+        Dim flag As Boolean = Directory.Exists(where) AndAlso Not File.GetAttributes(where).ToString().Contains("ReparsePoint")
+        If flag Then
+            Directory.Delete(where)
+        Else
+            Dim flag2 As Boolean = File.Exists(where)
+            If flag2 Then
+                File.Delete(where)
+            End If
+        End If
+        Return Win32.CreateSymbolicLink(where, fromWhere, If(isDirectory, Win32.SymLinkFlag.Directory, Win32.SymLinkFlag.File))
     End Function
 End Module
