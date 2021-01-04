@@ -61,6 +61,7 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Deployment" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.IO.Compression.FileSystem" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Core" />
@@ -113,6 +114,7 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
     <Compile Include="Objects\ConfigObject.vb" />
+    <Compile Include="Objects\ModObject.vb" />
     <Compile Include="WebSocket\Client\Index.vb" />
     <Compile Include="WebSocket\Client\Executers\MessageReceivedExecuter.vb" />
     <Compile Include="WebSocket\Client\Executers\ServerConnectedExecuter.vb" />
